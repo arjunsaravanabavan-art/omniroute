@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: omniroute
+    runtime: node
+    plan: free
+    buildCommand: bash render-edge/install.sh && bash render-edge/build.sh
+    startCommand: bash render-edge/start.sh
+    healthCheckPath: /api/health/ping
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 24.11.1
+      - key: PORT
+        value: 10000
+      # Stable secrets for Render free: the bootstrap persists auto-generated
+      # secrets to ~/.omniroute/server.env, but Render free's home directory is
+      # ephemeral and resets on every restart/deploy. Pinning them here keeps
+      # sessions valid and encrypted provider credentials decryptable across
+      # restarts. Render generates each once and stores it securely.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: STORAGE_ENCRYPTION_KEY
+        generateValue: true
+      - key: API_KEY_SECRET
+        generateValue: true
