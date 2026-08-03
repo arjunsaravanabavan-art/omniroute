@@ -23,5 +23,18 @@ echo "[install] node $(node -v) / npm $(npm --version)"
 
 npm ci --omit=optional --no-audit --no-fund
 
+# Next.js 16's config loader imports @parcel/watcher at startup (via the
+# next-intl plugin chain), and next-intl lists @parcel/watcher as a REGULAR
+# dependency — but @parcel/watcher's platform binary is itself an OPTIONAL
+# dependency (@parcel/watcher-linux-x64-glibc), so the `npm ci --omit=optional`
+# above installs the JS wrapper without its native binary and the build dies
+# with "No prebuild or local build of @parcel/watcher found" before `next build`
+# even starts. Re-installing @parcel/watcher (pinned to the lockfile resolution)
+# pulls that one tiny napi binary back in (with --no-save, so package.json /
+# package-lock.json stay untouched) WITHOUT restoring the ~2-3GB of optional
+# ML/native packs (transformers, tfjs, tiktoken, keytar, ...) that
+# --omit=optional is deliberately avoiding on the 512MB build instance.
+npm install --no-save --no-audit --no-fund @parcel/watcher@2.5.6
+
 echo "[install] completed in ${SECONDS}s"
 du -sh node_modules 2>/dev/null || true
